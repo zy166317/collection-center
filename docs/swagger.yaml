@@ -1,0 +1,374 @@
+basePath: /
+definitions:
+  request.OrderReq:
+    properties:
+      email:
+        type: string
+      mode:
+        description: 字符串判断
+        type: string
+      originaltoken:
+        description: origin token name
+        type: string
+      originaltokenamount:
+        description: origin token amount
+        type: string
+      targettoken:
+        description: target token name
+        type: string
+      targettokenamount:
+        type: string
+      userreceiveaddress:
+        type: string
+    required:
+    - mode
+    - originaltoken
+    - originaltokenamount
+    - targettoken
+    - targettokenamount
+    - userreceiveaddress
+    type: object
+  request.OutReq:
+    properties:
+      mode:
+        type: string
+      originaltoken:
+        type: string
+      originaltokenamount:
+        type: string
+      targettoken:
+        type: string
+    required:
+    - mode
+    - originaltoken
+    - originaltokenamount
+    - targettoken
+    type: object
+  request.RefundReq:
+    properties:
+      email:
+        type: string
+      id:
+        type: string
+      refundaddress:
+        type: string
+    required:
+    - id
+    - refundaddress
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: collection-center 接口
+  title: collection-center 接口
+  version: 1.0.0
+paths:
+  /btcusdt:
+    get:
+      consumes:
+      - application/json
+      description: 获取 btc pricefeed
+      parameters:
+      - description: 用户语言 CN 或EN 不填默 CN
+        in: header
+        name: Language
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{''code'':0,''message'':''Success'',''data'':{''price'':''2821462000000''}}'
+          schema:
+            type: string
+      summary: 获取 btc pricefeed
+      tags:
+      - '[PriceFeed]btc'
+  /ethusdt:
+    get:
+      consumes:
+      - application/json
+      description: 获取 eth pricefeed
+      parameters:
+      - description: 用户语言 CN 或EN 不填默 CN
+        in: header
+        name: Language
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{''code'':0,''message'':''Success'',''data'':{''price'':''154492827441''}}'
+          schema:
+            type: string
+      summary: 获取 eth pricefeed
+      tags:
+      - '[PriceFeed]ETH'
+  /liquidity/liquidity:
+    get:
+      consumes:
+      - application/json
+      description: 获取 Liquidity
+      parameters:
+      - description: 用户语言 CN 或EN 不填默 CN
+        in: header
+        name: Language
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{''code'':0,''message'':''Success'',''data'':{''vol'':''661231211''}}'
+          schema:
+            type: string
+      summary: 获取 Liquidity
+      tags:
+      - '[Liquidity]Liquidity'
+  /liquidity/out:
+    get:
+      consumes:
+      - application/json
+      description: 获取 Liquidity Out
+      parameters:
+      - description: 用户语言 CN 或EN 不填默 CN
+        in: header
+        name: Language
+        type: string
+      - description: '{''mode'':”, ''originaltoken'':”, ''originaltokenamount'':”,''targettoken'':”}'
+        in: body
+        name: object
+        required: true
+        schema:
+          $ref: '#/definitions/request.OutReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{''code'':0,''message'':''Success'',''data'':{''amount'':''661231211''}}'
+          schema:
+            type: string
+      summary: 获取 Liquidity Out
+      tags:
+      - '[Liquidity]Liquidity Out'
+  /order/brief:
+    get:
+      consumes:
+      - application/json
+      description: 获取 order sum 简要信息
+      parameters:
+      - description: 用户语言 CN 或EN 不填默 CN
+        in: header
+        name: Language
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{''code'':0,''message'':''Success'',''data'':{[''allTime'':200.3,''past24'':20.3,''past7'':10.3,''past30'':30.3]}}'
+          schema:
+            type: string
+      summary: 获取 order sum 简要信息
+      tags:
+      - '[Order]Brief'
+  /order/detail:
+    get:
+      consumes:
+      - application/json
+      description: 根据 order_id 获取 order 详情
+      parameters:
+      - description: 用户语言 CN 或EN 不填默 CN
+        in: header
+        name: Language
+        type: string
+      - description: 订单ID
+        in: query
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{''code'':0,''message'':''Success'',''data'':{''todo'':''todo''}}'
+          schema:
+            type: string
+      summary: 获取 order 详情
+      tags:
+      - '[Order]Order'
+  /order/generateorder:
+    post:
+      consumes:
+      - application/json
+      description: 创建订单
+      parameters:
+      - description: 用户语言 CN 或EN 不填默 CN
+        in: header
+        name: Language
+        type: string
+      - description: '{''mode'':”, ''originaltoken'':”, ''originaltokenamount'':”,''targettoken'':”,''targettokenamount'':”,''userreceiveaddress'':”,''email'':”}'
+        in: body
+        name: object
+        required: true
+        schema:
+          $ref: '#/definitions/request.OrderReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{''code'':0,''message'':''Success'',''data'':{''Order'':{}}}'
+          schema:
+            type: string
+      summary: 创建订单
+      tags:
+      - '[Order]Generate'
+  /order/historyorder:
+    get:
+      consumes:
+      - application/json
+      description: 获取 order 历史记录 - 最新10条
+      parameters:
+      - description: 用户语言 CN 或EN 不填默 CN
+        in: header
+        name: Language
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{''code'':0,''message'':''Success'',''data'':{''orders'':[{''id'':3,''status'':”},{}]}}'
+          schema:
+            type: string
+      summary: 获取 order 历史记录
+      tags:
+      - '[Order]Order'
+  /order/refund:
+    post:
+      consumes:
+      - application/json
+      description: 订单退款
+      parameters:
+      - description: 用户语言 CN 或EN 不填默 CN
+        in: header
+        name: Language
+        type: string
+      - description: '{''id'':”, ''refundaddress'':”, ''email'':”}'
+        in: body
+        name: object
+        required: true
+        schema:
+          $ref: '#/definitions/request.RefundReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{''code'':0,''message'':''Success'',''data'':{''id'':3}}'
+          schema:
+            type: string
+      summary: 订单退款
+      tags:
+      - '[Order]Refund'
+  /order/test:
+    get:
+      consumes:
+      - application/json
+      description: 测试
+      parameters:
+      - description: 用户语言 CN 或EN 不填默 CN
+        in: header
+        name: Language
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{''code'':0,''message'':''Success'',''data'':{''status'': true}}'
+          schema:
+            type: string
+      summary: 测试
+      tags:
+      - '[Order]TestOrder'
+  /price/btc:
+    get:
+      consumes:
+      - application/json
+      description: 获取 btc pricefeed
+      parameters:
+      - description: 用户语言 CN 或EN 不填默 CN
+        in: header
+        name: Language
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{''code'':0,''message'':''Success'',''data'':{''price'':''2821462000000''}}'
+          schema:
+            type: string
+      summary: 获取 btc pricefeed
+      tags:
+      - '[PriceFeed]btc'
+  /price/eth:
+    get:
+      consumes:
+      - application/json
+      description: 获取 eth pricefeed
+      parameters:
+      - description: 用户语言 CN 或EN 不填默 CN
+        in: header
+        name: Language
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{''code'':0,''message'':''Success'',''data'':{''price'':''154492827441''}}'
+          schema:
+            type: string
+      summary: 获取 eth pricefeed
+      tags:
+      - '[PriceFeed]ETH'
+  /price/gas:
+    get:
+      consumes:
+      - application/json
+      description: 获取 eth gas pricefeed
+      parameters:
+      - description: 用户语言 CN 或EN 不填默 CN
+        in: header
+        name: Language
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{''code'':0,''message'':''Success'',''data'':{''price'':''154492827441''}}'
+          schema:
+            type: string
+      summary: 获取 eth gas pricefeed
+      tags:
+      - '[PriceFeed]eth gas'
+  /test/ping:
+    get:
+      consumes:
+      - application/json
+      description: 测试接口Description
+      parameters:
+      - description: 用户语言 CN 或EN 不填默 CN
+        in: header
+        name: Language
+        type: string
+      - description: 测试参数
+        in: query
+        name: query
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{"OK"}'
+          schema:
+            type: string
+      summary: 测试接口Summary
+      tags:
+      - '[测试]测试接口'
+swagger: "2.0"

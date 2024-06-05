@@ -1,0 +1,11 @@
+version: '3'
+
+services:
+  app:
+    image: collection-center:latest
+    restart: always
+    command: /app/collection-center run --conf /etc/collection-center
+    ports:
+      - "8080:8080"
+    volumes:
+        - /work/conf:/etc/collection-center
