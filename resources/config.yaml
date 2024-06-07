@@ -9,7 +9,7 @@ api:
   QueuePrefetchLimit: 100
   Origin: http://192.168.8.63
 database:
-  DSN: "root:123456@tcp(192.168.124.155:3306)/coinvenni?charset=utf8mb4&parseTime=true&loc=Local"
+  DSN: "root:123456@tcp(127.0.0.1:3306)/coinvenni?charset=utf8mb4&parseTime=true&loc=Local"
   ReadDSN: []
   Active: 20
   Idle: 200
@@ -22,7 +22,7 @@ redis:
   Addr: "127.0.0.1:6379"
   #  Addr: "192.168.124.116:6379"
   Auth: ""
-  Db: 1 # 个人开发可以错开使用, 取值范围 0-15
+  Db: 0 # 个人开发可以错开使用, 取值范围 0-15
   DialTimeout: "1s"
   ReadTimeout: "200ms"
   WriteTimeout: "200ms"
@@ -81,3 +81,16 @@ waitBlocks:
 #  CommonBucket : "a"
 #  RoleArn : "acs:ram::11111:role/gt-medium-oss-uat"
 #  RoleSessionName : "a"
+collectionWallet:
+  ethWallet:
+    - 0x6100245165563350748684540982952184534421
+    - 0x6100245165563350748684540982952184534421
+  btcWallet:
+    - mqdEyyExvwmDyzXRaxSo6Yg8c5yaSKHTL1
+    - mqdEyyExvwmDyzXRaxSo6Yg8c5yaSKHTL1
+  tonWallet:
+    - 0:8af9a6680b82e2af9e36aa4b7c799b4010f56db2cc36d5f62fe889489609f044
+    - 0:8af9a6680b82e2af9e36aa4b7c799b4010f56db2cc36d5f62fe889489609f044
+  solWallet:
+    - 0x6100245165563350748684540982952184534421
+    - 0x6100245165563350748684540982952184534421

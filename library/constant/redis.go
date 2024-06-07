@@ -32,6 +32,8 @@ const (
 	SecondListenSamWalletQueue = "QUEUE:Second_Listen_Sam_Wallet"
 	ThirdListenSamWalletQueue  = "QUEUE:Third_Listen_Sam_Wallet"
 	CoreToUserQueue            = "QUEUE:Core_To_User"
+	TonQueue                   = "QUEUE:Ton"
+	EthQueue                   = "QUEUE:Eth"
 )
 
 const (

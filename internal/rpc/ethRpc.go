@@ -13,21 +13,21 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"encoding/json"
+	"github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/go-errors/errors"
 	"github.com/shopspring/decimal"
+	"golang.org/x/xerrors"
 	"math/big"
 	"reflect"
 	"strings"
 	"time"
-
-	"github.com/ethereum/go-ethereum"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/ethclient"
-	"golang.org/x/xerrors"
 )
 
 type EthClient struct {
@@ -35,6 +35,34 @@ type EthClient struct {
 	ChainID *big.Int
 	Network string
 	RpcUrl  string
+}
+
+// 原生ETH RPC
+type BaseEthClient struct {
+	Client *rpc.Client
+}
+
+type BaseTx struct {
+	AccessList           []interface{} `json:"accessList"`
+	BlockHash            string        `json:"blockHash"`
+	BlockNumber          string        `json:"blockNumber"`
+	ChainId              string        `json:"chainId"`
+	From                 string        `json:"from"`
+	Gas                  string        `json:"gas"`
+	GasPrice             string        `json:"gasPrice"`
+	Hash                 string        `json:"hash"`
+	Input                string        `json:"input"`
+	MaxFeePerGas         string        `json:"maxFeePerGas"`
+	MaxPriorityFeePerGas string        `json:"maxPriorityFeePerGas"`
+	Nonce                string        `json:"nonce"`
+	R                    string        `json:"r"`
+	S                    string        `json:"s"`
+	To                   string        `json:"to"`
+	TransactionIndex     string        `json:"transactionIndex"`
+	Type                 string        `json:"type"`
+	V                    string        `json:"v"`
+	Value                string        `json:"value"`
+	YParity              string        `json:"yParity"`
 }
 
 type EthRpc []string
@@ -53,10 +81,11 @@ type SendingInfo struct {
 }
 
 type EthTransfer struct {
-	Hash   string
-	From   string
-	To     string
-	Amount decimal.Decimal
+	Hash    string
+	From    string
+	To      string
+	Amount  decimal.Decimal
+	OrderId string
 }
 
 var (
@@ -88,7 +117,6 @@ func NewEthRpc(usingMainnet ...bool) (*EthClient, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	chainId, err := client.ChainID(ctx)
 	if err != nil {
 		return nil, err
@@ -100,6 +128,27 @@ func NewEthRpc(usingMainnet ...bool) (*EthClient, error) {
 		Network: utils.MatchNetwork(chainId),
 		RpcUrl:  url,
 	}, nil
+}
+
+func NewBaseEthRpc(usingMainnet ...bool) (*BaseEthClient, error) {
+	ctx := context.Background()
+	//url := "https://ethereum.publicnode.com"
+
+	// 随机生成rpc url
+	url, _, err := utils.RandomEthRpcUrl(EthRpcUrls)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(usingMainnet) > 0 && usingMainnet[0] {
+		url = strings.Replace(url, "goerli", "mainnet", 1)
+		logger.Debug("using mainnet url:", url)
+	}
+	client, err := rpc.DialContext(ctx, url)
+	if err != nil {
+		return nil, err
+	}
+	return &BaseEthClient{Client: client}, nil
 }
 
 func (e *EthClient) Close() {
@@ -747,3 +796,15 @@ func (e *EthClient) GetTransferByTxSign(ctx context.Context, sign string) (*EthT
 	}
 	return ethTx, err
 }
+
+// GetTransactionByTxSign 根据交易签名查询交易信息
+func (be *BaseEthClient) GetTransactionByTxSign(ctx context.Context, hash string) (*BaseTx, error) {
+	var transaction *BaseTx
+	err := be.Client.CallContext(context.Background(), &transaction, "eth_getTransactionByHash", hash)
+	if err != nil {
+		return nil, err
+	}
+	return transaction, nil
+}
+
+//根据

@@ -1,7 +1,7 @@
 package constant
 
 /*
-	地域id
+地域id
 */
 type RegionId string
 
@@ -10,7 +10,7 @@ const (
 )
 
 /*
-	角色arn
+角色arn
 */
 type RoleArn string
 
@@ -19,10 +19,14 @@ const (
 )
 
 /*
-	角色名称
+角色名称
 */
 type RoleSessionName string
 
 const (
 	RoleSessionNameLocal RoleSessionName = "ossbackup"
 )
+
+/*
+代币类型
+*/

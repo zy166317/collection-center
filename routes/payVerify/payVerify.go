@@ -1,16 +1,15 @@
 package payVerify
 
 import (
-	"collection-center/middleware"
 	"collection-center/service"
 	"github.com/gin-gonic/gin"
 )
 
 func InitPayVerifyRoutes(engine *gin.Engine) {
 	group := engine.Group("/verify")
-	group.POST("/addhash", middleware.SessionAuth(), PayHash)
+	group.POST("/addhash", PayHash)
 }
 
 func PayHash(ctx *gin.Context) {
-	service.NewPayVerifyController(ctx).AddHash()
+	service.NewPayVerifyController(ctx).AddPendingOrder()
 }

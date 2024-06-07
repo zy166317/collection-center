@@ -197,6 +197,8 @@ func SetRedis(c *RedisConfig) (*RedisClient, error) {
 		SecondQueue, err = setRedisMq(constant.SecondListenSamWalletQueue, client, nil)
 		ThirdQueue, err = setRedisMq(constant.ThirdListenSamWalletQueue, client, nil)
 		CoreToUserQueue, err = setRedisMq(constant.CoreToUserQueue, client, nil)
+		TonQueue, err = setRedisMq(constant.TonQueue, client, nil)
+		ETHQueue, err = setRedisMq(constant.EthQueue, client, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -220,6 +222,8 @@ func SetRedis(c *RedisConfig) (*RedisClient, error) {
 		SecondQueue, err = setRedisMq(constant.SecondListenSamWalletQueue, nil, singleOption)
 		ThirdQueue, err = setRedisMq(constant.ThirdListenSamWalletQueue, nil, singleOption)
 		CoreToUserQueue, err = setRedisMq(constant.CoreToUserQueue, nil, singleOption)
+		TonQueue, err = setRedisMq(constant.TonQueue, nil, singleOption)
+		ETHQueue, err = setRedisMq(constant.EthQueue, nil, singleOption)
 		if err != nil {
 			return nil, err
 		}
@@ -281,6 +285,9 @@ var FirstQueue rmq.Queue
 var SecondQueue rmq.Queue
 var ThirdQueue rmq.Queue
 var CoreToUserQueue rmq.Queue // 处于 2队列与3队列之间
+var TonQueue rmq.Queue
+var ETHQueue rmq.Queue
+var SolQueue rmq.Queue
 
 // setRedisMq 是一个设置队列的示例
 // queueName 是队列的名称

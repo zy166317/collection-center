@@ -1,6 +1,7 @@
 package service
 
 import (
+	"collection-center/library/request"
 	"collection-center/library/utils"
 	"github.com/gin-gonic/gin"
 )
@@ -15,6 +16,19 @@ func NewPayVerifyController(ctx *gin.Context) *PayVerifyController {
 	return c
 }
 
-func (p *PayVerifyController) AddHash() {
-
+func (p *PayVerifyController) AddPendingOrder() {
+	req := &request.PendingOrderReq{}
+	err := p.Ctx.ShouldBind(req)
+	if err != nil {
+		p.ResponseErr(err)
+		return
+	}
+	ip := p.Ctx.RemoteIP()
+	req.NotifyIp = ip
+	err = AddPendingTonOrder(req)
+	if err != nil {
+		p.ResponseErr(err)
+		return
+	}
+	p.ResponseOk(nil)
 }

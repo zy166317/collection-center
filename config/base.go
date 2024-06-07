@@ -7,10 +7,8 @@ import (
 	"collection-center/internal/rpc"
 	"collection-center/internal/signClient"
 	"collection-center/library/redis"
-	"collection-center/library/utils"
 	"collection-center/service/db"
 	"fmt"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli/v2"
 	"math/big"
@@ -19,21 +17,23 @@ import (
 )
 
 var (
-	env          string
-	serverConfig ServerConfig
+	env                  string
+	serverConfig         ServerConfig
+	CollectionWalletAddr *CollectionWallet
 )
 
 type ServerConfig struct {
-	Api         *ApiConfig
-	Application *ApplicationConfig
-	Log         *logger.LogConfig
-	Redis       *redis.RedisConfig
-	Database    *db.DBConfig
-	Rpc         *Rpc
-	EvmAddress  *rpc.EvmAddress
-	CoreWallet  *CoreWallet
-	WaitBlocks  *WaitBlocks
-	Email       *email.EmailConfig
+	Api              *ApiConfig
+	Application      *ApplicationConfig
+	Log              *logger.LogConfig
+	Redis            *redis.RedisConfig
+	Database         *db.DBConfig
+	Rpc              *Rpc
+	EvmAddress       *rpc.EvmAddress
+	CoreWallet       *CoreWallet
+	WaitBlocks       *WaitBlocks
+	Email            *email.EmailConfig
+	CollectionWallet *CollectionWallet
 }
 
 type Rpc struct {
@@ -69,6 +69,13 @@ type ApiConfig struct {
 }
 type ApplicationConfig struct {
 	Name string
+}
+
+type CollectionWallet struct {
+	EthWallet []string
+	BtcWallet []string
+	SolWallet []string
+	TonWallet []string
 }
 
 func Config() *ServerConfig {
@@ -135,7 +142,13 @@ func InitConfig(cctx *cli.Context) {
 	}
 	//载入db配置
 	db.SetDB(serverConfig.Database)
-
+	//载入收款钱包地址
+	CollectionWalletAddr = &CollectionWallet{
+		EthWallet: serverConfig.CollectionWallet.EthWallet,
+		BtcWallet: serverConfig.CollectionWallet.BtcWallet,
+		SolWallet: serverConfig.CollectionWallet.SolWallet,
+		TonWallet: serverConfig.CollectionWallet.TonWallet,
+	}
 	//载入 rpc 配置信息
 	btc.BtcRpcList = *serverConfig.Rpc.BtcRpc
 	// remoteSigner
@@ -160,31 +173,31 @@ func InitConfig(cctx *cli.Context) {
 	btc.WaitBlockCltBtcMax = serverConfig.WaitBlocks.CollectBtcMax
 	btc.WaitBlockCltBtcMin = serverConfig.WaitBlocks.CollectBtcMin
 
-	//初始化btcd的配置
-	err = btc.InitBtcd(serverConfig.Rpc.Test)
-	if err != nil {
-		logger.Fatal("InitBtcd error:", err)
-	}
-
-	//载入邮箱配置
-	email.InitEmail(serverConfig.Email)
-
-	ethRpc, err := rpc.NewEthRpc()
-	if err != nil {
-		logger.Fatal("NewEthRpc error:", err)
-	}
-	//获取核心钱包初始化的pending nonce(不使用redis)
-	nonce, err := ethRpc.PendingNonce(common.HexToAddress(serverConfig.CoreWallet.EthWallet), false)
-	if err != nil {
-		logger.Fatal("PendingNonce error:", err)
-	}
-
-	err = redis.InitNonceRedis(nonce)
-	if err != nil {
-		logger.Fatal("redis.InitNonceRedis error:", err)
-
-	}
-	utils.SetPasswd(serverConfig.Api.Secret)
+	////初始化btcd的配置
+	//err = btc.InitBtcd(serverConfig.Rpc.Test)
+	//if err != nil {
+	//	logger.Fatal("InitBtcd error:", err)
+	//}
+	//
+	////载入邮箱配置
+	//email.InitEmail(serverConfig.Email)
+	//
+	//ethRpc, err := rpc.NewEthRpc()
+	//if err != nil {
+	//	logger.Fatal("NewEthRpc error:", err)
+	//}
+	////获取核心钱包初始化的pending nonce(不使用redis)
+	//nonce, err := ethRpc.PendingNonce(common.HexToAddress(serverConfig.CoreWallet.EthWallet), false)
+	//if err != nil {
+	//	logger.Fatal("PendingNonce error:", err)
+	//}
+	//
+	//err = redis.InitNonceRedis(nonce)
+	//if err != nil {
+	//	logger.Fatal("redis.InitNonceRedis error:", err)
+	//
+	//}
+	//utils.SetPasswd(serverConfig.Api.Secret)
 	/*	// oss
 		o := new(OssConfig)
 		err = config.Sub("oss").Unmarshal(o)

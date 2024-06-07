@@ -4,9 +4,6 @@ import (
 	config2 "collection-center/config"
 	"collection-center/internal/logger"
 	redis2 "collection-center/library/redis"
-	"collection-center/service"
-	"collection-center/service/block"
-	"collection-center/service/price"
 	"collection-center/service/queue"
 	"collection-center/service/server"
 	"context"
@@ -42,41 +39,23 @@ func run(cctx *cli.Context) {
 	srv := server.NewHttpServer(config2.Config().Api.ListenPort, config2.Config().Api.Debug)
 	logger.Infof("Server start at:" + strconv.Itoa(config2.Config().Api.ListenPort))
 	// 同步流动性锁仓数据 - 仅在启动时执行一次 - 只能同步运行
-	redis2.InitLockLiquid()
+	//redis2.InitLockLiquid()
 	// redis mq
 	// 启动队列消费者
 	go func() {
-		err := queue.FirstQueueConsumer()
+		err := queue.TonQueueConsumer()
 		if err != nil {
 			logger.Error(err)
+			return
 		}
-		logger.Warn("启动第一队列消费者完成")
-
-		err = queue.SecondQueueConsumer()
-		if err != nil {
-			logger.Error(err)
-		}
-		logger.Warn("启动第二队列消费者完成")
-
-		err = queue.CoreToUserQueueConsumer()
-		if err != nil {
-			logger.Error(err)
-		}
-		logger.Warn("启动core转账队列消费者完成")
-
-		err = queue.ThirdQueueConsumer()
-		if err != nil {
-			logger.Error(err)
-		}
-		logger.Warn("启动第三队列消费者完成")
 	}()
 
 	// 同步价格并写入redis
-	go price.SyncPrice(15 * time.Second)
+	//go price.SyncPrice(15 * time.Second)
 	// 同步区块高度并写入redis
-	go block.SyncBlockHeight(15 * time.Second)
+	//go block.SyncBlockHeight(15 * time.Second)
 	// 将order表中的数据同步到redis - 仅在启动时执行一次
-	go service.SyncOrderDataOnceToRedis()
+	//go service.SyncOrderDataOnceToRedis()
 	// 同步BTC SAT
 	//go price.SyncSat(30 * time.Second)
 
