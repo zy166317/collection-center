@@ -1,0 +1,134 @@
+package main
+
+import (
+	"context"
+	"encoding/hex"
+	"ethereum/contract/build"
+	"fmt"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/rpc"
+	"log"
+)
+
+func main() {
+	//发送一笔eth交易
+	//eth_client.SendTransaction("b727e4fae4aafc7155f89024ec7361924ee5d52bfe8d6f622d27a55a2c35228f", "0x419562e5D4CB7E8a02A8BF1f8618E453A26EB354", big.NewInt(10000000000000000))
+	//查询一笔eth交易
+
+	//decodeString, err := hex.DecodeString("0:12b340be74f5be31b4323589361d3de8cea77c2526f0f29113f51238f18cb5ee")
+
+	//toString := base64.StdEncoding.EncodeToString([]byte("0:12b340be74f5be31b4323589361d3de8cea77c2526f0f29113f51238f18cb5ee"))
+
+	//log.Println(toString)
+	Token()
+
+	dialContext, err := rpc.DialContext(context.Background(), "http://52.220.116.164:18545")
+	//if err != nil {
+	//	panic(err)
+	//}
+	var rc *receipt
+	err = dialContext.CallContext(context.Background(), &rc, "eth_getTransactionReceipt", "0x1fb2313d46a4aad0c55ca29eb6b1cfd91b48cfdc12da9600c3800f6455b955ad")
+	if err != nil {
+		panic(err)
+	}
+	log.Printf("%+v", rc.BlockHash)
+	log.Printf("%+v", (rc.BlockNumber))
+	log.Printf("%+v", rc.ContractAddress)
+	log.Printf("%+v", rc.CumulativeGasUsed)
+	log.Printf("%+v", rc.From)
+	log.Printf("%+v", rc.GasUsed)
+	log.Printf("%+v", rc.Logs[0])
+	log.Printf("%+v", rc.LogsBloom)
+	log.Printf("%+v", rc.Status)
+	log.Printf("%+v", rc.To)
+	log.Printf("%+v", rc.TransactionHash)
+	log.Printf("%+v", rc.TransactionIndex)
+
+	//
+	//var tx *Tx
+	//err = dialContext.CallContext(context.Background(), &tx, "eth_getTransactionByHash", "0x2a42a8afc43aa329c80930301b623c1eb3f37b47977959dda8a4043115c979f8")
+	//if err != nil {
+	//	panic(err)
+	//}
+	//log.Printf("%+v", tx)
+	//str := "0xa9059cbb000000000000000000000000246c3538a721f98912a3189b958cbb27bae41d720000000000000000000000000000000000000000000000000000000010a50db6"
+	//decodeString, err := hex.DecodeString(str[2:])
+	//fmt.Println(string(decodeString))
+}
+func HexadecimalToString(str string) (string, error) {
+	decodeString, err := hex.DecodeString(str[2:])
+	if err != nil {
+		return "", err
+	}
+	return string(decodeString), nil
+}
+
+type Tx struct {
+	AccessList           []interface{} `json:"accessList"`
+	BlockHash            string        `json:"blockHash"`
+	BlockNumber          string        `json:"blockNumber"`
+	ChainId              string        `json:"chainId"`
+	From                 string        `json:"from"`
+	Gas                  string        `json:"gas"`
+	GasPrice             string        `json:"gasPrice"`
+	Hash                 string        `json:"hash"`
+	Input                string        `json:"input"`
+	MaxFeePerGas         string        `json:"maxFeePerGas"`
+	MaxPriorityFeePerGas string        `json:"maxPriorityFeePerGas"`
+	Nonce                string        `json:"nonce"`
+	R                    string        `json:"r"`
+	S                    string        `json:"s"`
+	To                   string        `json:"to"`
+	TransactionIndex     string        `json:"transactionIndex"`
+	Type                 string        `json:"type"`
+	V                    string        `json:"v"`
+	Value                string        `json:"value"`
+	YParity              string        `json:"yParity"`
+}
+
+type Log struct {
+	Address          string   `json:"address"`
+	BlockHash        string   `json:"blockHash"`
+	BlockNumber      string   `json:"blockNumber"`
+	Data             string   `json:"data"`
+	LogIndex         string   `json:"logIndex"`
+	Removed          bool     `json:"removed"`
+	Topics           []string `json:"topics"`
+	TransactionHash  string   `json:"transactionHash"`
+	TransactionIndex string   `json:"transactionIndex"`
+}
+
+type receipt struct {
+	BlockHash         string  `json:"blockHash"`
+	BlockNumber       string  `json:"blockNumber"`
+	ContractAddress   *string `json:"contractAddress"` // Pointer type for nullable fields
+	CumulativeGasUsed string  `json:"cumulativeGasUsed"`
+	From              string  `json:"from"`
+	GasUsed           string  `json:"gasUsed"`
+	Logs              []*Log  `json:"logs"` // Assuming Log is defined elsewhere if needed  data：货币数量  topics[len(topics)-1]:收款地址
+	LogsBloom         string  `json:"logsBloom"`
+	Status            string  `json:"status"`
+	To                string  `json:"to"` //通过该地址可以获取到token名称
+	TransactionHash   string  `json:"transactionHash"`
+	TransactionIndex  string  `json:"transactionIndex"`
+}
+
+func Token() {
+	client, err := ethclient.Dial("http://52.220.116.164:18545")
+	if err != nil {
+		panic(err)
+	}
+	toAddress := common.HexToAddress("0xdAC17F958D2ee523a2206206994597C13D831ec7")
+	log.Println(toAddress)
+	token, err := build.NewToken(toAddress, client)
+	if err != nil {
+		panic(err)
+	}
+	name, err := token.Name(&bind.CallOpts{})
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(name)
+}
