@@ -94,3 +94,9 @@ collectionWallet:
   solWallet:
     - 0x6100245165563350748684540982952184534421
     - 0x6100245165563350748684540982952184534421
+hystrix:
+  timeout: 1000
+  maxConcurrentRequests: 100
+  requestVolumeThreshold: 1000
+  sleepWindow: 5000
+  errorPercentThreshold: 50

@@ -42,6 +42,33 @@ type BaseEthClient struct {
 	Client *rpc.Client
 }
 
+type Log struct {
+	Address          string   `json:"address"`
+	BlockHash        string   `json:"blockHash"`
+	BlockNumber      string   `json:"blockNumber"`
+	Data             string   `json:"data"`
+	LogIndex         string   `json:"logIndex"`
+	Removed          bool     `json:"removed"`
+	Topics           []string `json:"topics"`
+	TransactionHash  string   `json:"transactionHash"`
+	TransactionIndex string   `json:"transactionIndex"`
+}
+
+type Receipt struct {
+	BlockHash         string  `json:"blockHash"`
+	BlockNumber       string  `json:"blockNumber"`
+	ContractAddress   *string `json:"contractAddress"` // Pointer type for nullable fields
+	CumulativeGasUsed string  `json:"cumulativeGasUsed"`
+	From              string  `json:"from"`
+	GasUsed           string  `json:"gasUsed"`
+	Logs              []*Log  `json:"logs"` // Assuming Log is defined elsewhere if needed  data：货币数量  topics[len(topics)-1]:收款地址
+	LogsBloom         string  `json:"logsBloom"`
+	Status            string  `json:"status"`
+	To                string  `json:"to"` //通过该地址可以获取到token名称
+	TransactionHash   string  `json:"transactionHash"`
+	TransactionIndex  string  `json:"transactionIndex"`
+}
+
 type BaseTx struct {
 	AccessList           []interface{} `json:"accessList"`
 	BlockHash            string        `json:"blockHash"`
@@ -777,6 +804,16 @@ func (e *EthClient) GetAddrTransfers(addr string, fromHeight int64, coinType str
 	return targetTx.Hash, gasFee, nil
 }
 
+// 获取token名称
+func (e *EthClient) GetTokenName(tokenAddr string) (string, error) {
+	address := common.HexToAddress(tokenAddr)
+	token, err := build.NewToken(address, e.Client)
+	if err != nil {
+		return "", err
+	}
+	return token.Name(nil)
+}
+
 // GetTransferByTxSign 根据交易签名查询交易信息
 func (e *EthClient) GetTransferByTxSign(ctx context.Context, sign string) (*EthTransfer, error) {
 	tx, pending, err := e.Client.TransactionByHash(ctx, common.HexToHash(sign))
@@ -797,7 +834,6 @@ func (e *EthClient) GetTransferByTxSign(ctx context.Context, sign string) (*EthT
 	return ethTx, err
 }
 
-// GetTransactionByTxSign 根据交易签名查询交易信息
 func (be *BaseEthClient) GetTransactionByTxSign(ctx context.Context, hash string) (*BaseTx, error) {
 	var transaction *BaseTx
 	err := be.Client.CallContext(context.Background(), &transaction, "eth_getTransactionByHash", hash)
@@ -807,4 +843,11 @@ func (be *BaseEthClient) GetTransactionByTxSign(ctx context.Context, hash string
 	return transaction, nil
 }
 
-//根据
+func (be *BaseEthClient) SyncTransactionReceipt(ctx context.Context, hash string) (*Receipt, error) {
+	var rc *Receipt
+	err := be.Client.CallContext(context.Background(), &rc, "eth_getTransactionReceipt", hash)
+	if err != nil {
+		return nil, err
+	}
+	return rc, nil
+}

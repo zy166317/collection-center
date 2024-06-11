@@ -89,6 +89,16 @@ func (consumer *EthConsumer) Consume(delivery rmq.Delivery) {
 		_ = delivery.Reject()
 		return
 	}
+	//判断是同质化代币还是非同质化代币
+	//value==0x0,非同质化代币
+	if transaction.Value == "0x0" {
+		_, err := ethRpc.SyncTransactionReceipt(context.Background(), verifyOrder.Hash)
+		if err != nil {
+			logger.Error("SyncTransactionReceipt:", err)
+			_ = delivery.Reject()
+			return
+		}
+	}
 	if transaction.Input == "0x" {
 		logger.Error("transaction input is null:", verifyOrder.Hash)
 		return

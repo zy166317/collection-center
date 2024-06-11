@@ -7,8 +7,10 @@ import (
 	"collection-center/internal/rpc"
 	"collection-center/internal/signClient"
 	"collection-center/library/redis"
+	"collection-center/middleware"
 	"collection-center/service/db"
 	"fmt"
+	"github.com/afex/hystrix-go/hystrix"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli/v2"
 	"math/big"
@@ -34,6 +36,7 @@ type ServerConfig struct {
 	WaitBlocks       *WaitBlocks
 	Email            *email.EmailConfig
 	CollectionWallet *CollectionWallet
+	Hystrix          *HystrixConfig
 }
 
 type Rpc struct {
@@ -76,6 +79,13 @@ type CollectionWallet struct {
 	BtcWallet []string
 	SolWallet []string
 	TonWallet []string
+}
+
+type HystrixConfig struct {
+	MaxConcurrent         int
+	Timeout               int
+	ErrorPercentThreshold int
+	SleepWindow           int
 }
 
 func Config() *ServerConfig {
@@ -142,6 +152,13 @@ func InitConfig(cctx *cli.Context) {
 	}
 	//载入db配置
 	db.SetDB(serverConfig.Database)
+	//初始化hystrix config
+	middleware.InitHystrixConfig(hystrix.CommandConfig{
+		Timeout:               serverConfig.Hystrix.Timeout,               // 1秒超时
+		MaxConcurrentRequests: serverConfig.Hystrix.MaxConcurrent,         // 最大并发请求数
+		SleepWindow:           serverConfig.Hystrix.SleepWindow,           // 熔断器休眠时间
+		ErrorPercentThreshold: serverConfig.Hystrix.ErrorPercentThreshold, // 错误百分比阈值
+	})
 	//载入收款钱包地址
 	CollectionWalletAddr = &CollectionWallet{
 		EthWallet: serverConfig.CollectionWallet.EthWallet,

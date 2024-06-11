@@ -50,13 +50,20 @@ func CreateOrder(data *Order) (int64, error) {
 }
 
 func UpdateOrderInfo(id int64, order *Order) (bool, error) {
-	row, err := db.Client().Where("id = ?", id).Update(order)
+	session := db.Client().NewSession()
+	defer session.Close()
+	row, err := session.Where("id = ?", id).Update(order)
 	if err != nil {
+		session.Rollback()
 		return false, err
 	}
 	if row != 1 {
+		session.Rollback()
 		return false, xerrors.New("Update failed")
 	}
-
+	if err := session.Commit(); err != nil {
+		session.Rollback()
+		return false, err
+	}
 	return true, nil
 }
