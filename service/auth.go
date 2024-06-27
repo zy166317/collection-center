@@ -13,12 +13,7 @@ import (
 
 type jwtCustomClaims struct {
 	jwt.StandardClaims
-	Uid              int64  `json:"uid"`
-	Role             string `json:"role"`
-	Username         string `json:"username"`
-	PlatFormType     string `json:"platformType"`
-	Nickname         string `json:"nickname"`
-	OrganizationCode string `json:"organizationCode"`
+	Uid int64 `json:"uid"`
 }
 
 func UserLogout(uid int64) error {
@@ -26,29 +21,24 @@ func UserLogout(uid int64) error {
 	return redis.Client().Del(key).Err()
 }
 
-func AuthByToken(token string) (uid int64, role string, organizationCode string, platformType string, username string, nickname string, err error) {
+func AuthByToken(token string) (uid int64, err error) {
 	//jwt中解析非敏感信息
 	claims, err := ParseToken(token, []byte(constant.JwtSecret))
 	if nil != err {
 		logger.Warnf("UserAuthByAk error:", err)
-		return 0, "", "", "", "", "", ecode.NoLogin
+		return 0, ecode.NoLogin
 	}
 	//获取redis token
 	Uid := claims.(jwt.MapClaims)["uid"].(float64)
 	uid = int64(Uid)
-	role = claims.(jwt.MapClaims)["role"].(string)
-	platformType = claims.(jwt.MapClaims)["platformType"].(string)
 	key := constant.AdminTokenKey(uid)
-	username = claims.(jwt.MapClaims)["username"].(string)
-	nickname = claims.(jwt.MapClaims)["nickname"].(string)
 	redisToken, err := redis.Client().Get(key).Result()
 	if err == nil {
 		//比对token
 		if redisToken != token {
 			logger.Warnf("AuthByToken :token not exists")
-			return 0, "", "", "", "", "", ecode.NoLogin
+			return 0, ecode.NoLogin
 		}
-		organizationCode = claims.(jwt.MapClaims)["organizationCode"].(string)
 	} else {
 		logger.Warnf("UserAuthByAk error:", err)
 		err = ecode.NoLogin
@@ -94,19 +84,10 @@ func CheckPermission(role string, permissionCheck ...string) (hasPer bool) {
 	return
 }
 
-func GenerateToken(issuer string, Uid int64, Role string, OrganizationCode string, PlatFormType, nickname string) (tokenString string, err error) {
+func GenerateToken(mail string, Uid int64) (tokenString string, err error) {
 	claims := &jwtCustomClaims{
-		jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Hour * constant.AdminExpireHour).Unix(),
-			Issuer:    issuer,
-		},
-		Uid,
-		Role,
-		// issuer 就是 username
-		issuer,
-		PlatFormType,
-		nickname,
-		OrganizationCode,
+		StandardClaims: jwt.StandardClaims{ExpiresAt: time.Now().Add(time.Hour * constant.AdminExpireHour).Unix(), Issuer: mail},
+		Uid:            Uid,
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	SecretKey := []byte(constant.JwtSecret)
@@ -114,8 +95,8 @@ func GenerateToken(issuer string, Uid int64, Role string, OrganizationCode strin
 	return
 }
 
-func SaveToken(expireSeconds int, issuer string, Uid int64, Role string, OrganizationCode string, PlatFormType, nickname string) (tokenString string, err error) {
-	token, err := GenerateToken(issuer, Uid, Role, OrganizationCode, PlatFormType, nickname)
+func SaveToken(expireSeconds int, issuer string, Uid int64) (tokenString string, err error) {
+	token, err := GenerateToken(issuer, Uid)
 	key := constant.AdminTokenKey(Uid)
 	if err != nil {
 		return token, err
@@ -125,9 +106,8 @@ func SaveToken(expireSeconds int, issuer string, Uid int64, Role string, Organiz
 	return token, err
 }
 
-func SendMailVerifyCodeToRedis(uid int64, verifyCode string) (err error) {
-	sendVerifyCodeKey := constant.MailVerifyCodeKey(uid)
-	_, err = redis.Client().Set(sendVerifyCodeKey, verifyCode, constant.EmailVerifyExpireHour*time.Hour).Result()
+func SendMailVerifyCodeToRedis(mail string, verifyCode string) (err error) {
+	_, err = redis.Client().Set(mail, verifyCode, constant.EmailVerifyCodeExpireMinute*time.Minute).Result()
 	return
 }
 
@@ -147,4 +127,9 @@ func RemoveCaptchaFromRedis(idCode string) (change int64, err error) {
 	getCaptchaKey := constant.CaptchaKey(idCode)
 	change, err = redis.Client().Del(getCaptchaKey).Result()
 	return
+}
+
+func GetEmailVerifyCodeFromRedis(mail string) (string, error) {
+	result, err := redis.Client().Get(mail).Result()
+	return result, err
 }

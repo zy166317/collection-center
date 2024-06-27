@@ -7,7 +7,6 @@ import (
 	"collection-center/internal/signClient/pb/offlineSign"
 	"collection-center/library/redis"
 	"collection-center/library/utils"
-	"collection-center/service/db/dao"
 	"context"
 	"encoding/hex"
 	"encoding/json"
@@ -212,13 +211,13 @@ func FormatRawTx(from string, to string, amountStr string) (string, Inputs, erro
 		return "", nil, err
 	}
 	WIF := ""
-	if from != BtcCoreWallet {
-		wlt, err := dao.SelectOrderByAddr(from)
-		if err != nil {
-			return "", nil, err
-		}
-		WIF = wlt.EncryptedKey
-	}
+	//if from != BtcCoreWallet {
+	//	wlt, err := dao.SelectOrderByAddr(from)
+	//	if err != nil {
+	//		return "", nil, err
+	//	}
+	//	WIF = wlt.EncryptedKey
+	//}
 	var inputs Inputs
 	for _, v := range bodyStruct.Tx.Inputs {
 		//logger.Info("Get format input tx data from blockcypher,tx hash:", v.PrevHash)

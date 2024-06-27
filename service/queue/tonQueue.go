@@ -5,26 +5,12 @@ import (
 	"collection-center/internal/logger"
 	"collection-center/internal/rpc"
 	"collection-center/library/redis"
-	"collection-center/service"
-	"collection-center/service/db/dao"
 	"context"
 	"encoding/json"
 	"github.com/adjust/rmq/v5"
-	"github.com/shopspring/decimal"
 	"strconv"
 	"time"
 )
-
-type VerifyOrderNotify struct {
-	Hash   string
-	Amount decimal.Decimal
-	Text   string
-	IPAddr string
-}
-
-type Comment struct {
-	Text string `json:"text"`
-}
 
 type TonConsumer struct {
 	rmq.Consumer
@@ -80,9 +66,8 @@ func TonQueueConsumer() error {
 func (consumer *TonConsumer) Consume(delivery rmq.Delivery) {
 	payload := delivery.Payload()
 	payloadByte := []byte(payload)
-	verifyOrder := &service.VerifyOrder{}
-	err := json.Unmarshal(payloadByte, verifyOrder)
-	if err != nil {
+	verifyOrder := VerifyOrder{}
+	if err := json.Unmarshal(payloadByte, verifyOrder); err != nil {
 		logger.Error("TonQueueConsumer 消费失败:", err)
 		_ = delivery.Reject()
 		return
@@ -96,10 +81,11 @@ func (consumer *TonConsumer) Consume(delivery rmq.Delivery) {
 	}
 	transaction, err := tonRpc.GetTonTransaction(context.Background(), verifyOrder.Hash)
 	if err != nil {
-		logger.Error("GetTonTransaction:", err)
+		logger.Error("tonRpc.GetTonTransaction:", err)
 		_ = delivery.Reject()
 		return
 	}
+	//交易未成功
 	if !transaction.Success {
 		logger.Info("transaction status failed", transaction.Hash)
 		return
@@ -110,46 +96,38 @@ func (consumer *TonConsumer) Consume(delivery rmq.Delivery) {
 		return
 	}
 	//收款地址校验
-	ok := false
-	for _, v := range config.CollectionWalletAddr.TonWallet {
-		if transaction.OutMsgs[0].Destination.Value.Address == v {
-			ok = true
-			break
-		}
-	}
-	if !ok {
-		logger.Info("transaction outmsg destination is not equal collectaddr", transaction.Hash)
-		return
-	}
-	//附带信息校验
-	if transaction.OutMsgs[0].DecodedBody == nil {
-		logger.Info("transaction outmsg decodedbody is nil", transaction.Hash)
-		return
-	}
-	//解析TON交易附带订单号
-	var TONComment Comment
-	err = json.Unmarshal(transaction.OutMsgs[0].DecodedBody, &TONComment)
-	if err != nil {
-		logger.Error("json.Unmarshal:", err)
-		_ = delivery.Reject()
-		return
-	}
+	//if _, has := config.CollectionInfo["TON"]; has {
+	//	if transaction.OutMsgs[0].Destination.Value.Address != config.CollectionInfo["TON"].Address {
+	//		logger.Info("transaction outmsg dest is not collection address", transaction.Hash)
+	//		return
+	//	}
+	//}
+
+	//通过收款地址校验，插入记录
+	//tonRecord := &dao.TonRecord{
+	//	Hash:      verifyOrder.Hash,
+	//	From:      transaction.Account.Address,
+	//	To:        transaction.OutMsgs[0].Destination.Value.Address,
+	//	Value:     "",
+	//	Status:    "",
+	//	CreatedAt: time.Time{},
+	//	UpdatedAt: time.Time{},
+	//}
+
 	//构建回调信息
-	tonVerifyOrderNotify := &VerifyOrderNotify{
-		Hash:   transaction.Hash,
-		Amount: decimal.New(transaction.OutMsgs[0].Value, 10),
-		Text:   TONComment.Text,
-		IPAddr: verifyOrder.IPAddr,
-	}
+	//tonVerifyOrderNotify := &VerifyOrder{
+	//	Hash:   transaction.Hash,
+	//	Amount: decimal.New(transaction.OutMsgs[0].Value, 10),
+	//	IPAddr: verifyOrder.IPAddr,
+	//}
 	//更新数据库
-	succ, err := dao.UpdateOrderInfo(verifyOrder.Id, &dao.Order{Status: dao.ORDER_RECEIVED, OriginalTokenAmount: tonVerifyOrderNotify.Amount, GameOrderId: tonVerifyOrderNotify.Text})
-	if err != nil || !succ {
-		logger.Error("UpdateOrderInfo:", err)
-		_ = delivery.Reject()
-		return
-	}
-	logger.Info("test success")
-	//TODO 构建通用通知http发送确认信息
-	SendMsg(tonVerifyOrderNotify)
-	logger.Info(tonVerifyOrderNotify)
+	//succ, err := dao.UpdateOrderInfo(verifyOrder.Id, &dao.Order{Status: dao.ORDER_SUCCESS, OriginalTokenAmount: tonVerifyOrderNotify.Amount, GameOrderId: tonVerifyOrderNotify.Text})
+	//if err != nil || !succ {
+	//	logger.Error("UpdateOrderInfo:", err)
+	//	_ = delivery.Reject()
+	//	return
+	//}
+	//SendMsg(tonVerifyOrderNotify)
+	logger.Info("ton success")
+	_ = delivery.Ack()
 }

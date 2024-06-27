@@ -6,22 +6,24 @@ import (
 	"collection-center/internal/rpc"
 	"collection-center/library/redis"
 	"collection-center/library/utils"
-	"collection-center/service"
-	"collection-center/service/db/dao"
 	"context"
 	"encoding/json"
 	"github.com/adjust/rmq/v5"
-	"github.com/shopspring/decimal"
+	"math"
+	"math/big"
 	"strconv"
 	"time"
 )
+
+const COSUMER_LIMIT = 10
+const RETURN_LIMIT = math.MaxInt16
 
 type EthConsumer struct {
 	rmq.Consumer
 }
 
 func EthQueueConsumer() error {
-	logger.Info("Ton Queue Consumer Starting")
+	logger.Info("ETH Queue Consumer Starting")
 	prefetchLimit := config.Config().Api.QueuePrefetchLimit
 	if prefetchLimit == 0 {
 		prefetchLimit = 20
@@ -63,90 +65,100 @@ func EthQueueConsumer() error {
 		}
 	}()
 
-	logger.Info("EthQueueConsumer Ton队列消费者已启动")
+	logger.Info("EthQueueConsumer ETH队列消费者已启动")
 	return nil
 }
 
 func (consumer *EthConsumer) Consume(delivery rmq.Delivery) {
 	payload := delivery.Payload()
 	payloadByte := []byte(payload)
-	verifyOrder := &service.VerifyOrder{}
+	verifyOrder := &VerifyOrder{}
 	err := json.Unmarshal(payloadByte, verifyOrder)
 	if err != nil {
 		logger.Error("EthQueueConsumer 消费失败:", err)
 		_ = delivery.Reject()
 		return
 	}
+
 	ethRpc, err := rpc.NewBaseEthRpc(false)
 	if err != nil {
-		logger.Error("NewTonRpc:", err)
+		logger.Error("NewBaseEthRpc:", err)
 		_ = delivery.Reject()
 		return
 	}
+	//定义交易金额，erc20 token addr
+	var amount string
+	var fromAddr string
+	var toAddr string
+	var tokenAddr string
 	transaction, err := ethRpc.GetTransactionByTxSign(context.Background(), verifyOrder.Hash)
 	if err != nil {
 		logger.Error("GetTransferByTxSign:", err)
 		_ = delivery.Reject()
 		return
 	}
-	//判断是同质化代币还是非同质化代币
-	//value==0x0,非同质化代币
+	//定义erc20 decimals
+	precision := utils.GetDecimalsInt(18)
 	if transaction.Value == "0x0" {
-		_, err := ethRpc.SyncTransactionReceipt(context.Background(), verifyOrder.Hash)
+		rc, err := ethRpc.SyncTransactionReceipt(context.Background(), transaction.Hash)
 		if err != nil {
 			logger.Error("SyncTransactionReceipt:", err)
 			_ = delivery.Reject()
 			return
 		}
-	}
-	if transaction.Input == "0x" {
-		logger.Error("transaction input is null:", verifyOrder.Hash)
-		return
-	}
-	ok := false
-	for _, v := range config.CollectionWalletAddr.EthWallet {
-		if v == transaction.To {
-			ok = true
-			break
+		//分析交易日志
+		if len(rc.Logs) > 0 {
+			newEthRpc, err := rpc.NewEthRpc()
+			if err != nil {
+				logger.Error("NewEthRpc:", err)
+				_ = delivery.Reject()
+				return
+
+			}
+			//获取代币精度
+			precision, _, _, err = newEthRpc.GetTokenInfo(rc.Logs[len(rc.Logs)-1].Address)
+			if err != nil {
+				logger.Error("GetTokenDecimal error:", err)
+				return
+			}
+			//根据代币合约获取收款地址
+			toAddr = utils.Hex(rc.Logs[len(rc.Logs)-1].Topics[len(rc.Logs[0].Topics)-1])
+			//TODO 校验交易收款地址
+			if toAddr == "" {
+				logger.Info("verify passed")
+			} else {
+				logger.Error("verify not passed", verifyOrder.Hash)
+				return
+			}
+			//交易数量
+			amount = rc.Logs[len(rc.Logs)-1].Data
+			tokenAddr = rc.To
 		}
+	} else {
+		//校验收款地址
+		//if transaction.To != "" {
+		//	logger.Info("校验通过")
+		//} else {
+		//	logger.Error("交易收款地址校验失败")
+		//}
+		amount = transaction.Value
 	}
-	if !ok {
-		logger.Error("transaction to is not equal payAddr:", verifyOrder.Hash)
-		return
-	}
-	//交易订单校验
-	if transaction.Input == "" {
-		logger.Error("transaction input is null:", verifyOrder.Hash)
-		return
-	}
-	//amount格式转换
-	amount, err := decimal.NewFromString(transaction.Value)
-	if err != nil {
-		logger.Error("NewFromString:", err)
-		_ = delivery.Reject()
-		return
-	}
-	//eth input16进制转string
-	text, err := utils.HexadecimalToString(transaction.Input)
-	if err != nil {
-		logger.Error("HexadecimalToString:", err)
-		_ = delivery.Reject()
-		return
-	}
-	//构建回调信息
-	tonVerifyOrderNotify := &VerifyOrderNotify{
-		Hash:   transaction.Hash,
-		Amount: amount,
-		Text:   text,
-	}
-	//更新数据库
-	succ, err := dao.UpdateOrderInfo(verifyOrder.Id, &dao.Order{Status: dao.ORDER_RECEIVED, OriginalTokenAmount: tonVerifyOrderNotify.Amount, GameOrderId: tonVerifyOrderNotify.Text})
-	if err != nil || !succ {
-		logger.Error("UpdateOrderInfo:", err)
-		_ = delivery.Reject()
-		return
-	}
-	logger.Info("test success")
-	//TODO 构建通用通知http发送确认信息
-	logger.Info(tonVerifyOrderNotify)
+	//获取精度值
+	s := precision.String()
+	tokenPrecision := utils.GetDecimalsString(s)
+	amountstr := utils.HexadecimalToString(amount)
+	bigInt := new(big.Int)
+	setString, _ := bigInt.SetString(amountstr, 10)
+	//根据对应货币精度计算
+	div := utils.DecimalsDiv(setString, tokenPrecision)
+	//from to
+	_ = fromAddr
+	_ = toAddr
+	//erc20 token address
+	_ = tokenAddr
+	logger.Info("test success", div)
+	_ = delivery.Ack()
+
 }
+
+// eth转账||erc20标准Token校验

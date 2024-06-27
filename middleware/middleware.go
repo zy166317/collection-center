@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"collection-center/config"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -11,7 +10,7 @@ func CrossDomain() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		method := c.Request.Method
 
-		c.Header("Access-Control-Allow-Origin", config.Config().Api.Origin)
+		c.Header("Access-Control-Allow-Origin", "*")
 		//c.Header("Access-Control-Allow-Headers", "Access-Control-Allow-Origin, Content-Type, AccessToken, X-CSRF-Token, Authorization, Token, Language")
 		c.Header("Access-Control-Allow-Headers", "Authorization, Content-Length, X-CSRF-Token, Token,session,X_Requested_With,Accept, Origin, Host, Connection, Accept-Encoding, Accept-Language,DNT, X-CustomHeader, Keep-Alive, User-Agent, X-Requested-With, If-Modified-Since, Cache-Control, Content-Type, Pragma")
 		c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")

@@ -37,33 +37,3 @@ func ParsePage(page request.Page) dao.Page {
 		PageSize:   page.PageSize,
 	}
 }
-
-//func GetAuthPagePost(pageNumber int, pageSize int) *UserService.Page {
-//	return &UserService.Page{
-//		PageNumber: int64(pageNumber),
-//		PageSize:   int64(pageSize),
-//	}
-//}
-//func GetUserPageQuery(c *gin.Context) (*UserService.Page, error) {
-//	pageNumber, _ := strconv.ParseInt(c.DefaultQuery("pageNumber", "1"), 10, 64)
-//	pageSize, _ := strconv.ParseInt(c.DefaultQuery("pageSize", "10"), 10, 64)
-//
-//	return &UserService.Page{
-//		PageNumber: pageNumber,
-//		PageSize:   pageSize,
-//	}, nil
-//}
-//func GetMessagePageQuery(c *gin.Context) *MessageService.Page {
-//	pageNumber, _ := strconv.ParseInt(c.DefaultQuery("pageNumber", "1"), 10, 64)
-//	pageSize, _ := strconv.ParseInt(c.DefaultQuery("pageSize", "10"), 10, 64)
-//	return &MessageService.Page{
-//		PageNumber: pageNumber,
-//		PageSize:   pageSize,
-//	}
-//}
-//func GetMessagePagePost(pageNumber int, pageSize int) *MessageService.Page {
-//	return &MessageService.Page{
-//		PageNumber: int64(pageNumber),
-//		PageSize:   int64(pageSize),
-//	}
-//}

@@ -2,9 +2,7 @@ package middleware
 
 import (
 	"collection-center/internal/ecode"
-	"collection-center/library/constant"
 	"collection-center/library/response"
-	"collection-center/library/utils"
 	"collection-center/service"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -19,7 +17,7 @@ type ForbiddenRule struct {
 
 func checkAuth(ctx *gin.Context, checkRoles *[]string) error {
 	//uid, role, organizationCode, platFormType, username, nickname, err := service.AuthByToken(ctx.GetHeader("Token"))
-	uid, role, _, _, username, nickname, err := service.AuthByToken(ctx.GetHeader("Token"))
+	uid, err := service.AuthByToken(ctx.GetHeader("Token"))
 	if err != nil {
 		return err
 	}
@@ -27,22 +25,6 @@ func checkAuth(ctx *gin.Context, checkRoles *[]string) error {
 	if uid == 0 {
 		return ecode.AccessDenied
 	}
-	//只有超级账号和医保局账号可操作此平台
-	//if platFormType != constant.PLAT_FORM_BP && platFormType != constant.PLAT_FORM_ALL {
-	//	return ecode.AccessDenied
-	//}
-	if checkRoles != nil {
-		if len(*checkRoles) != 0 {
-			if (*checkRoles)[0] != "" && utils.FindInString(role, checkRoles) == -1 {
-				return ecode.AccessDenied
-			}
-		}
-	}
-	ctx.Set(constant.ROLE, role)
-	//ctx.Set(constant.ORG_CODE, organizationCode)
-	//ctx.Set(constant.PLAT_FORM_TYPE, platFormType)
-	ctx.Set(constant.USERNAME, username)
-	ctx.Set(constant.NICKNAME, nickname)
 	return nil
 }
 

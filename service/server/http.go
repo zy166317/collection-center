@@ -6,7 +6,8 @@ import (
 	"collection-center/library/redis"
 	"collection-center/middleware"
 	"collection-center/routes"
-	"collection-center/routes/payVerify"
+	"collection-center/routes/merchant"
+	"collection-center/routes/project"
 	"errors"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -35,8 +36,9 @@ func NewHttpServer(port int, isDebug bool) *http.Server {
 	//engine.Use(middleware.CheckAuth())
 	routes.InitRoutes(engine)
 	// 路由逻辑
-	payVerify.InitPayVerifyRoutes(engine)
-
+	//payVerify.InitPayVerifyRoutes(engine)
+	merchant.InitMerchantRoutes(engine)
+	project.InitProjectRoutes(engine)
 	addr := ":" + strconv.Itoa(port)
 	srv := &http.Server{
 		Addr:    addr,

@@ -7,9 +7,10 @@ api:
   Secret: $%^$Secret@#as{?.
   SystemEmail: info@orca.email.cn
   QueuePrefetchLimit: 100
-  Origin: http://192.168.8.63
+  Origin: http://127.0.0.1
+  JwtSecret: 9527
 database:
-  DSN: "root:123456@tcp(127.0.0.1:3306)/coinvenni?charset=utf8mb4&parseTime=true&loc=Local"
+  DSN: "postgres://orca_web3:orca_web3!@192.168.8.63:5444/collection_center?sslmode=disable"
   ReadDSN: []
   Active: 20
   Idle: 200
@@ -19,10 +20,10 @@ database:
   ExecTimeout: "1s"
   TranTimeout: "1s"
 redis:
-  Addr: "127.0.0.1:6379"
+  Addr: "192.168.8.63:6379"
   #  Addr: "192.168.124.116:6379"
-  Auth: ""
-  Db: 0 # 个人开发可以错开使用, 取值范围 0-15
+  Auth: "orca_redis"
+  Db: 11 # 个人开发可以错开使用, 取值范围 0-15
   DialTimeout: "1s"
   ReadTimeout: "200ms"
   WriteTimeout: "200ms"
@@ -48,31 +49,6 @@ rpc:
       - go.getblock.io/10aacc88908d47b89997b8f72a180757
     mainnet:
       - go.getblock.io/0bdcdc1ae4d34e41aebeb1089a821706
-  remoteSigner:
-    host: 192.168.8.63
-    port: 8080
-    tlsPemPath: ./resources/grpc-server-cert.pem
-    user: orca_off_signer
-    pass: orca_6b9c1bb0f29f80a4fa759d8af2d26dd2
-
-evmAddress:
-  usdtErc20: 0x65E2fe35C30eC218b46266F89847c63c2eDa7Dc7
-  ethPriceFeed: 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419
-  ethGasPriceFeed: 0x169E633A2D1E6c10dD91238Ba11c4A708dfEF37C
-  btcPriceFeed: 0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c
-
-coreWallet:
-  ethWallet: 0x6100245165563350748684540982952184534421
-  btcWallet: mqdEyyExvwmDyzXRaxSo6Yg8c5yaSKHTL1
-
-waitBlocks:
-  eth: 3
-  btc: 1
-  collectEthMin: 20
-  collectEthMax: 25
-  collectBtcMin: 1
-  collectBtcMax: 2
-
 ## oss 调用地址
 #oss:
 #  AccessKeyId : "a"
@@ -81,19 +57,6 @@ waitBlocks:
 #  CommonBucket : "a"
 #  RoleArn : "acs:ram::11111:role/gt-medium-oss-uat"
 #  RoleSessionName : "a"
-collectionWallet:
-  ethWallet:
-    - 0x6100245165563350748684540982952184534421
-    - 0x6100245165563350748684540982952184534421
-  btcWallet:
-    - mqdEyyExvwmDyzXRaxSo6Yg8c5yaSKHTL1
-    - mqdEyyExvwmDyzXRaxSo6Yg8c5yaSKHTL1
-  tonWallet:
-    - 0:8af9a6680b82e2af9e36aa4b7c799b4010f56db2cc36d5f62fe889489609f044
-    - 0:8af9a6680b82e2af9e36aa4b7c799b4010f56db2cc36d5f62fe889489609f044
-  solWallet:
-    - 0x6100245165563350748684540982952184534421
-    - 0x6100245165563350748684540982952184534421
 hystrix:
   timeout: 1000
   maxConcurrentRequests: 100

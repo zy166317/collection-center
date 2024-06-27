@@ -1,57 +1,71 @@
 package request
 
-type CreateUser struct {
-	Username         string `json:"username"`
-	UserPhone        string `json:"userPhone"`
-	Email            string `json:"email"`
-	Password         string `json:"password"`
-	Role             string `json:"role"`
-	Nickname         string `json:"nickname"`
-	OrganizationCode string `json:"organizationCode"`
-	AccountStatus    string `json:"accountStatus"`
+// 发送验证码
+type SendVerifyCodeReq struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
-type UpdateUser struct {
-	UserId        int64  `json:"userId"`
-	UserPhone     string `json:"userPhone"`
-	Email         string `json:"email"`
-	Password      string `json:"password"`
-	Role          string `json:"role"`
-	Nickname      string `json:"nickname"`
-	AccountStatus string `json:"accountStatus"`
+type CreateMerchantReq struct {
+	VerifyCode string `json:"verifyCode"`
+	Email      string `json:"email"`
+	Password   string `json:"password"`
 }
 
-type UserPassLogin struct {
-	VerifyCaptcha
-	Password     string `json:"password"`
-	Username     string `json:"username"`
-	PlatformType string `json:"platformType"`
+type LoginMerchantReq struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
-type UpdateUserStatus struct {
-	UserId        int64  `json:"userId"`
-	AccountStatus string `json:"accountStatus"`
-}
-type EmailVerify struct {
-	Email string `json:"email"`
-}
-
-type UpdateActiveStatus struct {
-	Username        string `json:"username"`
-	Password        string `json:"password"`
-	EmailVerifyCode string `json:"emailVerifyCode"`
-	PlatformType    string `json:"platformType"`
-}
-type ListUserTmpPwdReq struct {
-	UsernameList *[]string `json:"usernameList"`
-}
-type CreateTmpPwdReq struct {
-	Username      string `json:"username"`
-	Password      string `json:"password"`
-	ExpireSeconds int64  `json:"expireSeconds"`
+type CreateProjectReq struct {
+	Name           string                  `json:"name"`      //项目名称
+	Domain         string                  `json:"domain"`    //项目域名
+	NotifyUrl      string                  `json:"notifyUrl"` //项目回调地址
+	CollectInfo    map[string][]*TokenInfo //收款信息
+	CollectAddress map[string]string       //收款地址
 }
 
-type VerifyCaptcha struct {
-	IdCode    string `json:"idCode"`
-	ImageCode string `json:"imageCode"`
+type TokenInfo struct {
+	TokenSymbol string `json:"tokenSymbol"` //币种
+	Rate        int    `json:"rate"`        //汇率必须为整数
+}
+
+type AddTokenInfoReq struct {
+	Chain           string `json:"chain"`
+	ContractAddress string `json:"contractAddress"`
+	LogoUrl         string `json:"logoUrl"`
+}
+
+type UpdateProjectInfo struct {
+	ProjectUid int64  `json:"projectUid"`
+	Domain     string `json:"domain"`
+	NotifyUrl  string `json:"notifyUrl"`
+}
+
+// 更新收款信息
+type UpdateCollectRate struct {
+	ProjectUid int64 `json:"projectUid"`
+	CollectUid int64 `json:"collectUid"`
+	Rate       int   `json:"rate"`
+}
+
+// 更新收款地址
+type UpdateCollectAddress struct {
+	ProjectUid int64  `json:"projectUid"`
+	Chain      string `json:"chain"`
+	Address    string `json:"address"`
+}
+
+// 冻结项目
+type FreezeProjectReq struct {
+	ProjectUid int64 `json:"projectUid"`
+}
+
+// 创建付款单
+type CreatePaymentReq struct {
+	ProjectUid          int64  `json:"projectUid"`
+	CollectUid          int64  `json:"collectUid"`
+	CreationChain       string `json:"creationChain"`
+	CreationTokenSymbol string `json:"creationTokenSymbol"`
+	ReturnUrl           string `json:"returnUrl"`
 }

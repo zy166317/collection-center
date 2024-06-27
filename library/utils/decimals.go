@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"collection-center/internal/logger"
 	"errors"
 	"fmt"
 	"golang.org/x/xerrors"
@@ -8,12 +9,21 @@ import (
 	"strings"
 )
 
-// getDecimalsInt 获取精度 10^precision
-func getDecimalsInt(precision int) *big.Int {
+// GetDecimalsInt 获取精度 10^precision
+func GetDecimalsInt(precision int) *big.Int {
 	base := new(big.Int).SetInt64(10)
 	exponent := new(big.Int).SetInt64(int64(precision))
 	modulus := new(big.Int).SetInt64(0)
 	return new(big.Int).Exp(base, exponent, modulus)
+}
+
+// 获取精度
+func GetDecimalsString(num string) *big.Int {
+	setString, b := new(big.Int).SetString(num, 10)
+	if !b {
+		logger.Info("GetDecimalsString error: %v", num)
+	}
+	return setString
 }
 
 const (
@@ -24,13 +34,13 @@ const (
 
 func GetDecimals(coinType string) (*big.Int, *big.Float) {
 	if coinType == CoinUsdt {
-		res := getDecimalsInt(6)
+		res := GetDecimalsInt(6)
 		return res, new(big.Float).SetInt(res)
 	} else if coinType == CoinEth {
-		res := getDecimalsInt(18)
+		res := GetDecimalsInt(18)
 		return res, new(big.Float).SetInt(res)
 	} else if coinType == CoinBtc {
-		res := getDecimalsInt(8)
+		res := GetDecimalsInt(8)
 		return res, new(big.Float).SetInt(res)
 	} else {
 		return big.NewInt(0), big.NewFloat(0)
@@ -118,4 +128,11 @@ func DecimalParse(amount interface{}, decimal int) (string, error) {
 	amountOut := new(big.Float).Quo(amountTemp, decimalFloat)
 	amountStr, err := AsStringFromFloat(decimal, amountOut)
 	return amountStr, err
+}
+
+func DecimalsDiv(a, b *big.Int) *big.Float {
+	setInt := new(big.Float).SetInt(a)
+	float := new(big.Float).SetInt(b)
+	quo := new(big.Float).Quo(setInt, float)
+	return quo
 }

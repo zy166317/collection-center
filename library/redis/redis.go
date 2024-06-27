@@ -193,12 +193,9 @@ func SetRedis(c *RedisConfig) (*RedisClient, error) {
 			return nil, err
 		}
 		serviceRedis = &RedisClient{cluster: client}
-		FirstQueue, err = setRedisMq(constant.FirstListenSamWalletQueue, client, nil)
-		SecondQueue, err = setRedisMq(constant.SecondListenSamWalletQueue, client, nil)
-		ThirdQueue, err = setRedisMq(constant.ThirdListenSamWalletQueue, client, nil)
-		CoreToUserQueue, err = setRedisMq(constant.CoreToUserQueue, client, nil)
 		TonQueue, err = setRedisMq(constant.TonQueue, client, nil)
 		ETHQueue, err = setRedisMq(constant.EthQueue, client, nil)
+		SolQueue, err = setRedisMq(constant.SolQueue, client, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -218,12 +215,9 @@ func SetRedis(c *RedisConfig) (*RedisClient, error) {
 		if err != nil {
 			return nil, err
 		}
-		FirstQueue, err = setRedisMq(constant.FirstListenSamWalletQueue, nil, singleOption)
-		SecondQueue, err = setRedisMq(constant.SecondListenSamWalletQueue, nil, singleOption)
-		ThirdQueue, err = setRedisMq(constant.ThirdListenSamWalletQueue, nil, singleOption)
-		CoreToUserQueue, err = setRedisMq(constant.CoreToUserQueue, nil, singleOption)
 		TonQueue, err = setRedisMq(constant.TonQueue, nil, singleOption)
 		ETHQueue, err = setRedisMq(constant.EthQueue, nil, singleOption)
+		SolQueue, err = setRedisMq(constant.SolQueue, nil, singleOption)
 		if err != nil {
 			return nil, err
 		}
@@ -281,10 +275,6 @@ func ReleaseLock(lockName, code string) bool {
 	}
 }
 
-var FirstQueue rmq.Queue
-var SecondQueue rmq.Queue
-var ThirdQueue rmq.Queue
-var CoreToUserQueue rmq.Queue // 处于 2队列与3队列之间
 var TonQueue rmq.Queue
 var ETHQueue rmq.Queue
 var SolQueue rmq.Queue

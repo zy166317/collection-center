@@ -8,8 +8,14 @@ import (
 
 const commandName = "GlobalHystrixConfig"
 
-func InitHystrixConfig(config hystrix.CommandConfig) {
-	hystrix.ConfigureCommand(commandName, config)
+func init() {
+	hystrix.ConfigureCommand(commandName, hystrix.CommandConfig{
+		Timeout:                1000,
+		MaxConcurrentRequests:  100,
+		RequestVolumeThreshold: 1000,
+		SleepWindow:            5000,
+		ErrorPercentThreshold:  50,
+	})
 }
 
 // HystrixMiddleware Gin 中间件

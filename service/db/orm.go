@@ -1,11 +1,10 @@
 package db
 
 import (
+	"github.com/go-xorm/xorm"
+	_ "github.com/lib/pq"
 	"strings"
 	"time"
-
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/go-xorm/xorm"
 )
 
 var (
@@ -32,7 +31,7 @@ func Client() *ORM {
 	return serviceDB
 }
 func SetDB(c *DBConfig) *ORM {
-	dbtype := "mysql"
+	dbtype := "postgres"
 	master, err := xorm.NewEngine(dbtype, c.DSN)
 	if err != nil {
 		panic("new orm master engine error " + err.Error())

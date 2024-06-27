@@ -2,7 +2,6 @@ package email
 
 import (
 	"collection-center/internal/logger"
-	"collection-center/service/db/dao"
 	"fmt"
 	"gopkg.in/gomail.v2"
 )
@@ -23,6 +22,11 @@ func InitEmail(c *EmailConfig) {
 	conn.Pass = c.Pass
 }
 
+type BaseMailInfo struct {
+	MailAddress      string //邮箱地址
+	VerificationCode string //验证码
+}
+
 //func SendEmail(from string, to string, subject string, body string) {
 //	m := gomail.NewMessage()
 //	// 设置电子邮件的基本信息
@@ -39,61 +43,27 @@ func InitEmail(c *EmailConfig) {
 //	logger.Info("Email sent!")
 //}
 
-func SendEmail(order *dao.Orders) {
-	subject := "Please check your order"
+func SendEmail(mail *BaseMailInfo) {
+	subject := "Please verify your email address"
 	body := fmt.Sprintf(`
-                <section style="padding:20px;">
-                    <h5 style="text-align: center;">Your order ID is %d</h5>
-                    <p style="text-align: center;">%v %v To %v %v</p>
-                    <hr />
-                    <table>
-                        <tbody>
-                            <tr>
-                                <td>order Type</td>
-                                <td>%v</td>
-                            </tr>
-                            <tr>
-                                <td>order Status</td>
-                                <td>PENDING</td>
-                            </tr>
-                            <tr>
-                                <td>Send</td>
-                                <td>%v %v</td>
-                            </tr>
-                            <tr>
-                                <td>Receive</td>
-                                <td>%v %v</td>
-                            </tr>
-                            <tr>
-                                <td>Receive Address</td>
-                                <td>%v</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    <p>To make an exchange, send %v %v to the address within 30 minutes:</p>
-                    <h5 style="text-align: center;">%v</h5>
-                </section>
-            `,
-		order.Id,
-		order.OriginalTokenAmount,
-		order.OriginalToken,
-		order.TargetTokenAmount,
-		order.TargetToken,
-		order.Mode,
-		order.OriginalTokenAmount,
-		order.OriginalToken,
-		order.TargetTokenAmount,
-		order.TargetToken,
-		order.UserReceiveAddress,
-		order.OriginalTokenAmount,
-		order.OriginalToken,
-		order.WeReceiveAddress,
+               <section style="padding:20px;">
+                   <h5 style="text-align: center;"> %s</h5>
+                   <p style="text-align: center;">Verification code:%s</p>
+                   <hr />
+                   <table>
+                   </table>
+                   <p></p>
+                   <h5 style="text-align: center;">The verification code is valid for 30 minutes</h5>
+               </section>
+           `,
+		mail.MailAddress,
+		mail.VerificationCode,
 	)
 
 	m := gomail.NewMessage()
 	// 设置电子邮件的基本信息
 	m.SetHeader("From", conn.User)
-	m.SetHeader("To", order.Email)
+	m.SetHeader("To", mail.MailAddress)
 	m.SetHeader("Subject", subject)
 	m.SetBody("text/html", body)
 	// 设置SMTP服务器的详细信息

@@ -1,9 +1,9 @@
 package constant
 
+// 链
 const (
-	CoinEth  = "ETH"
-	CoinBtc  = "BTC"
-	CoinUsdt = "USDT"
-	CoinTon  = "TON"
-	CoinSol  = "SOL"
+	TonChain = "ton"
+	EthChain = "eth"
+	BtcChain = "btc"
+	SolChain = "sol"
 )

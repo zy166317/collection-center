@@ -7,10 +7,9 @@ import (
 	"collection-center/internal/rpc"
 	"collection-center/internal/signClient"
 	"collection-center/library/redis"
-	"collection-center/middleware"
 	"collection-center/service/db"
 	"fmt"
-	"github.com/afex/hystrix-go/hystrix"
+	"github.com/shopspring/decimal"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli/v2"
 	"math/big"
@@ -19,10 +18,15 @@ import (
 )
 
 var (
-	env                  string
-	serverConfig         ServerConfig
-	CollectionWalletAddr *CollectionWallet
+	env            string
+	serverConfig   ServerConfig
+	CollectionInfo map[string]*TokenWallet
 )
+
+type TokenWallet struct {
+	Address   string          // 钱包地址
+	Precision decimal.Decimal // 精度
+}
 
 type ServerConfig struct {
 	Api              *ApiConfig
@@ -31,12 +35,9 @@ type ServerConfig struct {
 	Redis            *redis.RedisConfig
 	Database         *db.DBConfig
 	Rpc              *Rpc
-	EvmAddress       *rpc.EvmAddress
-	CoreWallet       *CoreWallet
-	WaitBlocks       *WaitBlocks
-	Email            *email.EmailConfig
 	CollectionWallet *CollectionWallet
 	Hystrix          *HystrixConfig
+	Email            *email.EmailConfig
 }
 
 type Rpc struct {
@@ -47,20 +48,6 @@ type Rpc struct {
 	RemoteSigner   *signClient.RemoteSigner
 }
 
-type CoreWallet struct {
-	EthWallet string
-	BtcWallet string
-}
-
-type WaitBlocks struct {
-	Eth           int
-	Btc           int
-	CollectEthMin int
-	CollectEthMax int
-	CollectBtcMin int
-	CollectBtcMax int
-}
-
 type ApiConfig struct {
 	ListenPort         int
 	Debug              bool
@@ -69,6 +56,7 @@ type ApiConfig struct {
 	SystemEmail        string
 	QueuePrefetchLimit int
 	Origin             string // 开发环境跨域 http://192.168.8.63
+	JwtSecret          string
 }
 type ApplicationConfig struct {
 	Name string
@@ -152,20 +140,6 @@ func InitConfig(cctx *cli.Context) {
 	}
 	//载入db配置
 	db.SetDB(serverConfig.Database)
-	//初始化hystrix config
-	middleware.InitHystrixConfig(hystrix.CommandConfig{
-		Timeout:               serverConfig.Hystrix.Timeout,               // 1秒超时
-		MaxConcurrentRequests: serverConfig.Hystrix.MaxConcurrent,         // 最大并发请求数
-		SleepWindow:           serverConfig.Hystrix.SleepWindow,           // 熔断器休眠时间
-		ErrorPercentThreshold: serverConfig.Hystrix.ErrorPercentThreshold, // 错误百分比阈值
-	})
-	//载入收款钱包地址
-	CollectionWalletAddr = &CollectionWallet{
-		EthWallet: serverConfig.CollectionWallet.EthWallet,
-		BtcWallet: serverConfig.CollectionWallet.BtcWallet,
-		SolWallet: serverConfig.CollectionWallet.SolWallet,
-		TonWallet: serverConfig.CollectionWallet.TonWallet,
-	}
 	//载入 rpc 配置信息
 	btc.BtcRpcList = *serverConfig.Rpc.BtcRpc
 	// remoteSigner
@@ -177,19 +151,21 @@ func InitConfig(cctx *cli.Context) {
 	//载入 evm地址
 	//载入核心钱包地址
 	rpc.EthRpcUrls = *serverConfig.Rpc.EthRpc
-	rpc.EvmAddrs = *serverConfig.EvmAddress
-	rpc.EthCoreWalletAddr = serverConfig.CoreWallet.EthWallet
-	btc.BtcCoreWallet = serverConfig.CoreWallet.BtcWallet
 
 	// 载入等待区块数
-	rpc.WaitBlock = serverConfig.WaitBlocks.Eth
-	rpc.WaitBlockCltEthMax = serverConfig.WaitBlocks.CollectEthMax
-	rpc.WaitBlockCltEthMin = serverConfig.WaitBlocks.CollectEthMin
 
-	btc.WaitBlock = serverConfig.WaitBlocks.Btc
-	btc.WaitBlockCltBtcMax = serverConfig.WaitBlocks.CollectBtcMax
-	btc.WaitBlockCltBtcMin = serverConfig.WaitBlocks.CollectBtcMin
-
+	//info, err := dao.GetCollectionInfo()
+	//if err != nil {
+	//	logger.Fatal("GetCollectionInfo error:", err)
+	//}
+	//
+	//CollectionInfo = map[string]*TokenWallet{}
+	//for _, v := range info {
+	//	CollectionInfo[v.CoinName] = &TokenWallet{
+	//		Address:   v.Address,
+	//		Precision: v.Precision,
+	//	}
+	//}
 	////初始化btcd的配置
 	//err = btc.InitBtcd(serverConfig.Rpc.Test)
 	//if err != nil {
@@ -197,7 +173,7 @@ func InitConfig(cctx *cli.Context) {
 	//}
 	//
 	////载入邮箱配置
-	//email.InitEmail(serverConfig.Email)
+	email.InitEmail(serverConfig.Email)
 	//
 	//ethRpc, err := rpc.NewEthRpc()
 	//if err != nil {
@@ -228,6 +204,7 @@ func InitConfig(cctx *cli.Context) {
 		}
 		oss.RoleArn = o.RoleArn
 		oss.RoleSessionName = o.RoleSessionName*/
+	//initCollection()
 	err = initMimeType()
 	if err != nil {
 		logger.Fatal("initMimeType error:", err)
@@ -255,3 +232,18 @@ func initMimeType() error {
 	}
 	return nil
 }
+
+//// 加载收款信息
+//func initCollection() {
+//	info, err := dao.GetCollectionInfo()
+//	if err != nil {
+//		logger.Fatal("GetCollectionInfo error:", err)
+//	}
+//	CollectionInfo = map[string]*TokenWallet{}
+//	for _, v := range info {
+//		CollectionInfo[v.CoinName] = &TokenWallet{
+//			Address:   v.Address,
+//			Precision: v.Precision,
+//		}
+//	}
+//}

@@ -50,14 +50,14 @@ func UploadFileBytes(bucketName string, fileBytes []byte, objectName string) err
 	// 获取存储空间。
 	bucket, err := ossClient.Bucket(bucketName)
 	if err != nil {
-		fmt.Println("Error:", err)
+		fmt.Println("Error1:", err)
 		return err
 	}
 
 	// 上传Byte数组。
 	err = bucket.PutObject(objectName, bytes.NewReader(fileBytes))
 	if err != nil {
-		fmt.Println("Error:", err)
+		fmt.Println("Error2:", err)
 		return err
 	}
 	return nil
@@ -77,14 +77,14 @@ func DownloadFile(bucketName string, objectName string) ([]byte, error) {
 	// 获取存储空间。
 	bucket, err := ossClient.Bucket(bucketName)
 	if err != nil {
-		fmt.Println("Error:", err)
+		fmt.Println("Error3:", err)
 		return nil, err
 	}
 
 	// 下载文件到流。
 	body, err := bucket.GetObject(objectName)
 	if err != nil {
-		fmt.Println("Error:", err)
+		fmt.Println("Error4:", err)
 		return nil, err
 	}
 	// 数据读取完成后，获取的流必须关闭，否则会造成连接泄漏，导致请求无连接可用，程序无法正常工作。
@@ -92,7 +92,7 @@ func DownloadFile(bucketName string, objectName string) ([]byte, error) {
 
 	data, err := ioutil.ReadAll(body)
 	if err != nil {
-		fmt.Println("Error:", err)
+		fmt.Println("Error5:", err)
 		return nil, err
 	}
 	return data, nil
@@ -112,7 +112,7 @@ func DeleteFile(bucketName string, objectName string) error {
 	// 获取存储空间。
 	bucket, err := ossClient.Bucket(bucketName)
 	if err != nil {
-		fmt.Println("Error:", err)
+		fmt.Println("Error6:", err)
 		return err
 	}
 
@@ -120,7 +120,7 @@ func DeleteFile(bucketName string, objectName string) error {
 	// 如需删除文件夹，请将objectName设置为对应的文件夹名称。如果文件夹非空，则需要将文件夹下的所有object删除后才能删除该文件夹。
 	err = bucket.DeleteObject(objectName)
 	if err != nil {
-		fmt.Println("Error:", err)
+		fmt.Println("Error7:", err)
 		return err
 	}
 	return nil

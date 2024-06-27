@@ -6,22 +6,18 @@ import (
 	"collection-center/internal/logger"
 	"collection-center/internal/signClient"
 	"collection-center/internal/signClient/pb/offlineSign"
-	"collection-center/library/constant"
 	"collection-center/library/redis"
 	"collection-center/library/utils"
 	"collection-center/library/wallet"
 	"context"
 	"crypto/ecdsa"
-	"encoding/json"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
-	"github.com/go-errors/errors"
 	"github.com/shopspring/decimal"
 	"golang.org/x/xerrors"
 	"math/big"
@@ -139,7 +135,8 @@ func NewEthRpc(usingMainnet ...bool) (*EthClient, error) {
 		url = strings.Replace(url, "goerli", "mainnet", 1)
 		logger.Debug("using mainnet url:", url)
 	}
-
+	//url = "https://sepolia.infura.io/v3/c37467efc6b449df8f0c9c72fae503bf"
+	url = "http://52.220.116.164:18545"
 	client, err := ethclient.DialContext(ctx, url)
 	if err != nil {
 		return nil, err
@@ -171,6 +168,8 @@ func NewBaseEthRpc(usingMainnet ...bool) (*BaseEthClient, error) {
 		url = strings.Replace(url, "goerli", "mainnet", 1)
 		logger.Debug("using mainnet url:", url)
 	}
+	url = "https://sepolia.infura.io/v3/c37467efc6b449df8f0c9c72fae503bf"
+	url = "http://52.220.116.164:18545"
 	client, err := rpc.DialContext(ctx, url)
 	if err != nil {
 		return nil, err
@@ -726,83 +725,83 @@ func (e *EthClient) getRemoteSignFn() bind.SignerFn {
 // coinType: 币种类型 ETH / USDT
 // coinValue: 币种数量, 0.03 (ETH)
 // return: hash, gasFee - 单位 eth , err
-func (e *EthClient) GetAddrTransfers(addr string, fromHeight int64, coinType string, coinValue string) (hash string, gasFee *big.Float, err error) {
-	type Tx struct {
-		BlockNum        string      `json:"blockNum"`
-		Hash            string      `json:"hash"`
-		From            string      `json:"from"`
-		To              string      `json:"to"`
-		Value           json.Number `json:"value"`
-		Erc721TokenID   interface{} `json:"erc721TokenId"`
-		Erc1155Metadata interface{} `json:"erc1155Metadata"`
-		TokenID         interface{} `json:"tokenId"`
-		Asset           string      `json:"asset"`
-		Category        string      `json:"category"`
-	}
-
-	type txs struct {
-		Transfers []Tx `json:"transfers"`
-	}
-
-	param := struct {
-		FromBlock string `json:"fromBlock"`
-		ToAddress string `json:"toAddress"`
-		// category: ["external", "internal", "erc20", "erc721", "erc1155"],
-		Category []string `json:"category"`
-	}{
-		hexutil.EncodeUint64(uint64(fromHeight)),
-		addr,
-		[]string{"external", "internal"}, // external 别的地址转入，internal 自己转自己，erc20 代币
-	}
-	if coinType == constant.CoinUsdt {
-		param.Category = []string{"erc20"}
-	}
-	res := txs{}
-	// eth_accounts
-	err = e.Client.Client().CallContext(context.Background(), &res, "alchemy_getAssetTransfers", param)
-	if err != nil {
-		return "", nil, err
-	}
-	if len(res.Transfers) == 0 {
-		return "", nil, errors.New("no transfer")
-	}
-
-	//fmt.Printf("Res:%v\n", res)
-
-	// 寻找对应的交易
-	targetTx := Tx{}
-	for _, tmp := range res.Transfers {
-		v := tmp
-
-		// 1. 判断是否是对应的币种
-		if v.Asset != coinType {
-			logger.Error("Invalid coin type")
-			continue
-		}
-		// 2. 判断是否是对应的数量 coinValue "0.03", v.Value 0.03
-		cv, _ := utils.StrToBigFloat(coinValue)
-		vv, _ := utils.StrToBigFloat(string(v.Value))
-		// 判断tx value 小于 order in amount
-		if vv.Cmp(cv) != 0 {
-			logger.Info("Tx value small than order amount")
-			continue
-		}
-		//logger.Debug(v.Value)
-		targetTx = v
-	}
-	if targetTx.Hash == "" {
-		return "", nil, errors.New("no target transfer")
-	}
-	// 获取交易的gasFee
-	tx, err := e.Client.TransactionReceipt(context.Background(), common.HexToHash(targetTx.Hash))
-	if err != nil {
-		return "", nil, err
-	}
-	//tx.GasUsed
-	gasFeeWei := new(big.Int).Mul(big.NewInt(int64(tx.GasUsed)), tx.EffectiveGasPrice)
-	gasFee = utils.WeiToEth(gasFeeWei)
-	return targetTx.Hash, gasFee, nil
-}
+//func (e *EthClient) GetAddrTransfers(addr string, fromHeight int64, coinType string, coinValue string) (hash string, gasFee *big.Float, err error) {
+//	type Tx struct {
+//		BlockNum        string      `json:"blockNum"`
+//		Hash            string      `json:"hash"`
+//		From            string      `json:"from"`
+//		To              string      `json:"to"`
+//		Value           json.Number `json:"value"`
+//		Erc721TokenID   interface{} `json:"erc721TokenId"`
+//		Erc1155Metadata interface{} `json:"erc1155Metadata"`
+//		TokenID         interface{} `json:"tokenId"`
+//		Asset           string      `json:"asset"`
+//		Category        string      `json:"category"`
+//	}
+//
+//	type txs struct {
+//		Transfers []Tx `json:"transfers"`
+//	}
+//
+//	param := struct {
+//		FromBlock string `json:"fromBlock"`
+//		ToAddress string `json:"toAddress"`
+//		// category: ["external", "internal", "erc20", "erc721", "erc1155"],
+//		Category []string `json:"category"`
+//	}{
+//		hexutil.EncodeUint64(uint64(fromHeight)),
+//		addr,
+//		[]string{"external", "internal"}, // external 别的地址转入，internal 自己转自己，erc20 代币
+//	}
+//	if coinType == constant.CoinUsdt {
+//		param.Category = []string{"erc20"}
+//	}
+//	res := txs{}
+//	// eth_accounts
+//	err = e.Client.Client().CallContext(context.Background(), &res, "alchemy_getAssetTransfers", param)
+//	if err != nil {
+//		return "", nil, err
+//	}
+//	if len(res.Transfers) == 0 {
+//		return "", nil, errors.New("no transfer")
+//	}
+//
+//	//fmt.Printf("Res:%v\n", res)
+//
+//	// 寻找对应的交易
+//	targetTx := Tx{}
+//	for _, tmp := range res.Transfers {
+//		v := tmp
+//
+//		// 1. 判断是否是对应的币种
+//		if v.Asset != coinType {
+//			logger.Error("Invalid coin type")
+//			continue
+//		}
+//		// 2. 判断是否是对应的数量 coinValue "0.03", v.Value 0.03
+//		cv, _ := utils.StrToBigFloat(coinValue)
+//		vv, _ := utils.StrToBigFloat(string(v.Value))
+//		// 判断tx value 小于 order in amount
+//		if vv.Cmp(cv) != 0 {
+//			logger.Info("Tx value small than order amount")
+//			continue
+//		}
+//		//logger.Debug(v.Value)
+//		targetTx = v
+//	}
+//	if targetTx.Hash == "" {
+//		return "", nil, errors.New("no target transfer")
+//	}
+//	// 获取交易的gasFee
+//	tx, err := e.Client.TransactionReceipt(context.Background(), common.HexToHash(targetTx.Hash))
+//	if err != nil {
+//		return "", nil, err
+//	}
+//	//tx.GasUsed
+//	gasFeeWei := new(big.Int).Mul(big.NewInt(int64(tx.GasUsed)), tx.EffectiveGasPrice)
+//	gasFee = utils.WeiToEth(gasFeeWei)
+//	return targetTx.Hash, gasFee, nil
+//}
 
 // 获取token名称
 func (e *EthClient) GetTokenName(tokenAddr string) (string, error) {
@@ -812,6 +811,28 @@ func (e *EthClient) GetTokenName(tokenAddr string) (string, error) {
 		return "", err
 	}
 	return token.Name(nil)
+}
+
+// 获取token信息
+func (e *EthClient) GetTokenInfo(tokenAddr string) (*big.Int, string, string, error) {
+	address := common.HexToAddress(tokenAddr)
+	token, err := build.NewToken(address, e.Client)
+	if err != nil {
+		return nil, "", "", err
+	}
+	decimals, err := token.Decimals(nil)
+	if err != nil {
+		return nil, "", "", err
+	}
+	symbol, err := token.Symbol(nil)
+	if err != nil {
+		return nil, "", "", err
+	}
+	name, err := token.Name(nil)
+	if err != nil {
+		return nil, "", "", err
+	}
+	return decimals, name, symbol, nil
 }
 
 // GetTransferByTxSign 根据交易签名查询交易信息

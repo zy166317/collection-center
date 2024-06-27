@@ -18,6 +18,7 @@ const JwtSecret = "salt_19!iulia1@!&0"
 const AdminExpireHour = 12
 const TmpExpireMinutes = 120
 const EmailVerifyExpireHour = 2
+const EmailVerifyCodeExpireMinute = 15
 const CaptchaVerifyExpireMin = 2
 const SessionExpireHour = 24 * 7
 const SessionValue = "SWAPX:SESSION:VALUE"
@@ -34,6 +35,7 @@ const (
 	CoreToUserQueue            = "QUEUE:Core_To_User"
 	TonQueue                   = "QUEUE:Ton"
 	EthQueue                   = "QUEUE:Eth"
+	SolQueue                   = "QUEUE:Sol"
 )
 
 const (
